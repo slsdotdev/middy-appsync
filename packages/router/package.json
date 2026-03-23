@@ -1,0 +1,50 @@
+{
+  "name": "middy-appsync-router",
+  "version": "1.0.0",
+  "description": "A router for AWS AppSync using Middy middleware",
+  "sideEffects": false,
+  "type": "module",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://www.sls.dev",
+  "author": {
+    "name": "sls.dev",
+    "email": "dev@sls.dev",
+    "url": "https://wwww.sls.dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slsdotdev/gqlbase.git",
+    "directory": "packages/gqlbase"
+  },
+  "bugs": {
+    "url": "https://github.com/slsdotdev/gqlbase/issues"
+  },
+  "keywords": [
+    "Middy.js",
+    "AppSync",
+    "AWS",
+    "GraphQL",
+    "TypeScript"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./*": {
+      "default": "./dist/*/index.js",
+      "types": "./dist/*/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts",
+    "dev": "vitest watch"
+  }
+}
