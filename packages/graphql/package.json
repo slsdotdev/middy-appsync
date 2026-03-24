@@ -1,7 +1,7 @@
 {
-  "name": "middy-appsync-router",
+  "name": "@middy-appsync/graphql",
   "version": "1.0.0",
-  "description": "A router for AWS AppSync using Middy middleware",
+  "description": "A Lambda router and tools for AWS AppSync GraphQL using Middy middleware",
   "sideEffects": false,
   "type": "module",
   "license": "MIT",
@@ -16,11 +16,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slsdotdev/gqlbase.git",
-    "directory": "packages/gqlbase"
+    "url": "git+https://github.com/slsdotdev/middy-appsync.git",
+    "directory": "packages/graphql"
   },
   "bugs": {
-    "url": "https://github.com/slsdotdev/gqlbase/issues"
+    "url": "https://github.com/slsdotdev/middy-appsync/issues"
   },
   "keywords": [
     "Middy.js",
@@ -36,6 +36,10 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
     "./*": {
       "default": "./dist/*/index.js",
       "types": "./dist/*/index.d.ts"
@@ -43,8 +47,15 @@
   },
   "scripts": {
     "build": "tsc",
+    "dev": "tsc --watch",
     "test": "vitest run",
-    "lint": "eslint src --ext .ts",
-    "dev": "vitest watch"
+    "lint": "eslint src --ext .ts"
+  },
+  "devDependencies": {
+    "@middy/core": "^7.2.1",
+    "@types/aws-lambda": "^8.10.161"
+  },
+  "peerDependencies": {
+    "@middy/core": ">=7"
   }
 }

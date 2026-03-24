@@ -1,5 +1,5 @@
 {
-  "name": "workspace",
+  "name": "middy-appsync",
   "version": "1.0.0",
   "main": "turbo.json",
   "type": "module",
@@ -27,7 +27,8 @@
     "lint": "turbo run lint",
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "publish": "changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.30.0",

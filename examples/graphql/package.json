@@ -1,0 +1,36 @@
+{
+  "name": "@middy-appsync/graphql-example",
+  "version": "1.0.0",
+  "sideEffects": false,
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "homepage": "https://www.sls.dev",
+  "author": {
+    "name": "sls.dev",
+    "email": "dev@sls.dev",
+    "url": "https://wwww.sls.dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slsdotdev/middy-appsync.git",
+    "directory": "examples/graphql"
+  },
+  "bugs": {
+    "url": "https://github.com/slsdotdev/middy-appsync/issues"
+  },
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts",
+    "dev": "vitest watch"
+  },
+  "dependencies": {
+    "@middy/core": "^7.2.1",
+    "@middy-appsync/graphql": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.161"
+  }
+}
