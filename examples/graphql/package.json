@@ -1,6 +1,6 @@
 {
   "name": "@middy-appsync/graphql-example",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "sideEffects": false,
   "type": "module",
   "private": true,

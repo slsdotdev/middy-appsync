@@ -1,8 +1,8 @@
 import type { AppSyncResolverEvent, AppSyncResolverHandler, Context } from "aws-lambda";
 import { AnyResolver } from "../resolvers/index.js";
 import { createRouterRegistry } from "./registry.js";
-import { isValidGraphQLEvent } from "../utils/isValidGraphQLEvent.js";
 import { isBatchResolver } from "../resolvers/createResolver.js";
+import { isValidResolverEvent } from "../utils/event.js";
 
 export interface GraphQLRouterParams {
   resolvers: AnyResolver[];
@@ -32,7 +32,7 @@ export function appSyncGraphQLRouter(params: GraphQLRouterParams): AppSyncGraphQ
     context: Context
   ) {
     if (Array.isArray(event)) {
-      if (!event.length || event.some((e) => !isValidGraphQLEvent(e))) {
+      if (!event.length || event.some((e) => !isValidResolverEvent(e))) {
         throw new Error("Unknown resolver event format", {
           cause: { package: "@middy-appsync/graphql", event },
         });
@@ -48,7 +48,7 @@ export function appSyncGraphQLRouter(params: GraphQLRouterParams): AppSyncGraphQ
       return resolver.handler(event, context);
     }
 
-    if (!isValidGraphQLEvent(event)) {
+    if (!isValidResolverEvent(event)) {
       throw new Error("Unknown resolver event format", {
         cause: { package: "@middy-appsync/graphql", event },
       });

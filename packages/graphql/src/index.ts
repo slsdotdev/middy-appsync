@@ -15,6 +15,17 @@ export {
 export { appSyncGraphQLRouter, type GraphQLRouterParams } from "./router/index.js";
 
 export {
+  isCognitoIdentity,
+  isIAMIdentity,
+  isLambdaIdentity,
+  isOIDCIdentity,
+  allowCognitoIdentity,
+  allowIAMIdentity,
+  allowLambdaIdentity,
+  allowOIDCIdentity,
+} from "./middleware/index.js";
+
+export {
   type SchemaDefinition,
   type DefinitionObject,
   type DefinitionTypename,
@@ -23,4 +34,9 @@ export {
   type FieldResult,
   type FieldSource,
   type ValueType,
-} from "./utils/definition.js";
+  type FieldProps,
+  type AnyAppSyncResolverLikeEvent,
+  type AnyAppSyncBatchResolverEvent,
+  type AnyAppSyncResolverEvent,
+  isValidResolverEvent,
+} from "./utils/index.js";

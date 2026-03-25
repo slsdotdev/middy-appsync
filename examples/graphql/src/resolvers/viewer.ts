@@ -5,15 +5,16 @@ import {
   defineResolvers,
 } from "@middy-appsync/graphql";
 
-export const userName = createResolver({
+const userName = createResolver({
   typeName: "User",
   fieldName: "name",
+  authorize: () => true,
   resolve: ({ source }) => {
     return source.name;
   },
 });
 
-export const viewer = createQueryResolver({
+const viewer = createQueryResolver({
   fieldName: "me",
   resolve: () => {
     return {
@@ -23,7 +24,7 @@ export const viewer = createQueryResolver({
   },
 });
 
-export const createUser = createMutationResolver({
+const createUser = createMutationResolver({
   fieldName: "createUser",
   resolve: ({ arguments: { input } }) => {
     return {
