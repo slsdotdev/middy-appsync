@@ -1,0 +1,70 @@
+{
+  "name": "@middy-appsync/cli",
+  "version": "0.0.1",
+  "description": "A CLI tool for generating types and managing middy-appsync applications.",
+  "sideEffects": false,
+  "type": "module",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://www.sls.dev",
+  "author": {
+    "name": "sls.dev",
+    "email": "dev@sls.dev",
+    "url": "https://wwww.sls.dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slsdotdev/middy-appsync.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/slsdotdev/middy-appsync/issues"
+  },
+  "keywords": [
+    "Middy.js",
+    "AppSync",
+    "AWS",
+    "CLI",
+    "GraphQL",
+    "TypeScript"
+  ],
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "middy-appsync": "./bin/index.js"
+  },
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./*": {
+      "default": "./dist/*/index.js",
+      "types": "./dist/*/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "cac": "^7.0.0",
+    "tinyglobby": "^0.2.15"
+  },
+  "devDependencies": {
+    "@middy/core": "^7.2.1",
+    "@types/aws-lambda": "^8.10.161"
+  },
+  "peerDependencies": {
+    "@middy/core": ">=7"
+  }
+}

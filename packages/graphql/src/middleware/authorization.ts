@@ -110,9 +110,8 @@ export function withAuthorizer<
   return {
     before(request) {
       if (Array.isArray(request.event)) {
-        // eslint-disable-next-line @typescript-eslint/prefer-for-of
-        for (let i = 0; i < request.event.length; i++) {
-          const result = authorizer(request.event[i].identity);
+        for (const [i, event] of request.event.entries()) {
+          const result = authorizer(event.identity);
 
           if (typeof result === "boolean") {
             if (!result) throw new Error("Unauthorized");

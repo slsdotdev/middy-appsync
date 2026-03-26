@@ -28,9 +28,10 @@
   },
   "dependencies": {
     "@middy/core": "^7.2.1",
-    "@middy-appsync/graphql": "^1.0.0"
+    "@middy-appsync/graphql": "^0.0.1"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.161"
+    "@types/aws-lambda": "^8.10.161",
+    "@middy-appsync/cli": "^0.0.1"
   }
 }
