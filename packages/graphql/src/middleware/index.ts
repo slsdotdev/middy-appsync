@@ -1,8 +1,4 @@
 export {
-  isCognitoIdentity,
-  isIAMIdentity,
-  isLambdaIdentity,
-  isOIDCIdentity,
   allowCognitoIdentity,
   allowIAMIdentity,
   allowLambdaIdentity,

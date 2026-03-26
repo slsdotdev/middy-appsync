@@ -4,21 +4,19 @@ export {
   createMutationResolver,
   createSubscriptionResolver,
   defineResolvers,
+  isBatchResolver,
 
   /* Types */
   type Resolver,
   type AnyResolver,
   type ResolveHandler,
   type ResolverParams,
+  type BatchResolveHandler,
 } from "./resolvers/index.js";
 
 export { appSyncGraphQLRouter, type GraphQLRouterParams } from "./router/index.js";
 
 export {
-  isCognitoIdentity,
-  isIAMIdentity,
-  isLambdaIdentity,
-  isOIDCIdentity,
   allowCognitoIdentity,
   allowIAMIdentity,
   allowLambdaIdentity,
@@ -26,6 +24,11 @@ export {
 } from "./middleware/index.js";
 
 export {
+  isValidResolverEvent,
+  isCognito,
+  isIAM,
+  isLambda,
+  isOIDC,
   type SchemaDefinition,
   type DefinitionObject,
   type DefinitionTypename,
@@ -38,5 +41,7 @@ export {
   type AnyAppSyncResolverLikeEvent,
   type AnyAppSyncBatchResolverEvent,
   type AnyAppSyncResolverEvent,
-  isValidResolverEvent,
+  type AnyAppSyncResolverInputEvent,
+  type AnyIdentity,
+  type TypedAppSyncResolverEvent,
 } from "./utils/index.js";

@@ -1,5 +1,6 @@
 import middy, { MiddlewareObj, MiddyfiedHandler } from "@middy/core";
-import { AppSyncResolverEvent, Context } from "aws-lambda";
+import { AppSyncIdentity, Context } from "aws-lambda";
+import { hasProperty } from "../utils/typeGuards.js";
 import {
   DefinitionTypename,
   FieldArgs,
@@ -7,70 +8,92 @@ import {
   FieldSource,
   ObjectFieldName,
 } from "../utils/definition.js";
+import { ResolverEvent, TypedAppSyncResolverEvent } from "../utils/event.js";
+import { AnyIdentity } from "../utils/auth.js";
 
-export type ResolveHandler<TSource, TArgs, TResult> = (
-  event: AppSyncResolverEvent<TArgs, TSource>,
+export type ResolveHandler<
+  TTypeName extends DefinitionTypename,
+  TFieldName extends ObjectFieldName<TTypeName>,
+  TSource extends FieldSource<TTypeName, TFieldName>,
+  TArgs extends FieldArgs<TTypeName, TFieldName>,
+  TResult extends FieldResult<TTypeName, TFieldName>,
+  TIdentity extends AnyIdentity,
+> = (
+  event: TypedAppSyncResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity>,
   context: Context
 ) => Promise<TResult> | TResult;
 
-export type BatchResolveHandler<TSource, TArgs, TResult> = (
-  events: AppSyncResolverEvent<TArgs, TSource>[],
+export type BatchResolveHandler<
+  TTypeName extends DefinitionTypename,
+  TFieldName extends ObjectFieldName<TTypeName>,
+  TSource extends FieldSource<TTypeName, TFieldName>,
+  TArgs extends FieldArgs<TTypeName, TFieldName>,
+  TResult extends FieldResult<TTypeName, TFieldName>,
+  TIdentity extends AnyIdentity,
+> = (
+  events: TypedAppSyncResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity>[],
   context: Context
 ) => Promise<TResult[]> | TResult[];
 
-export type ResolverEvent<
-  TSource,
-  TArgs,
-  TBatch extends boolean | undefined = undefined,
-> = TBatch extends true
-  ? AppSyncResolverEvent<TArgs, TSource>[]
-  : AppSyncResolverEvent<TArgs, TSource>;
-
 export interface Resolver<
-  TTypeName extends DefinitionTypename = DefinitionTypename,
-  TFieldName extends ObjectFieldName<TTypeName> = ObjectFieldName<TTypeName>,
-  TBatch extends boolean | undefined = undefined,
-  TSource extends FieldSource<TTypeName, TFieldName> = FieldSource<TTypeName, TFieldName>,
-  TArgs extends FieldArgs<TTypeName, TFieldName> = FieldArgs<TTypeName, TFieldName>,
-  TResult extends FieldResult<TTypeName, TFieldName> = FieldResult<TTypeName, TFieldName>,
+  TTypeName extends DefinitionTypename,
+  TFieldName extends ObjectFieldName<TTypeName>,
+  TSource extends FieldSource<TTypeName, TFieldName>,
+  TArgs extends FieldArgs<TTypeName, TFieldName>,
+  TResult extends FieldResult<TTypeName, TFieldName>,
+  TIdentity extends AnyIdentity,
+  TBatch extends boolean | undefined,
 > {
   typeName: TTypeName;
   fieldName: TFieldName;
   batch?: TBatch;
-  handler: MiddyfiedHandler<ResolverEvent<TSource, TArgs, TBatch>, TResult, Error, Context>;
+  handler: MiddyfiedHandler<
+    ResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity, TBatch>,
+    TResult,
+    Error,
+    Context
+  >;
   use(
-    middleware: MiddlewareObj<ResolverEvent<TSource, TArgs, TBatch>, TResult, Error, Context>
-  ): Resolver<TTypeName, TFieldName, TBatch, TSource, TArgs, TResult>;
+    middleware: MiddlewareObj<
+      ResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity, TBatch>,
+      TResult,
+      Error,
+      Context
+    >
+  ): Resolver<TTypeName, TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>;
 }
 
 export type AnyResolver =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  | Resolver<any, any, undefined, any, any, any>
+  | Resolver<any, any, any, any, any, any, undefined>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  | Resolver<any, any, true, any, any, any>;
+  | Resolver<any, any, any, any, any, any, true>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AnyBatchResolver = Resolver<any, any, true, any, any, any>;
+export type AnyBatchResolver = Resolver<any, any, any, any, any, any, true>;
 
 export function isBatchResolver(resolver: AnyResolver): resolver is AnyBatchResolver {
-  return "batch" in resolver && resolver.batch === true;
+  return hasProperty(resolver, "batch") && resolver.batch === true;
 }
 
 export interface ResolverParams<
   TTypeName extends DefinitionTypename,
   TFieldName extends ObjectFieldName<TTypeName>,
-  TBatch extends boolean | undefined,
   TSource extends FieldSource<TTypeName, TFieldName>,
   TArgs extends FieldArgs<TTypeName, TFieldName>,
   TResult extends FieldResult<TTypeName, TFieldName>,
+  TIdentity extends AnyIdentity,
+  TBatch extends boolean | undefined,
 > {
   typeName: TTypeName;
   fieldName: TFieldName;
-  authorize?: unknown;
   batch?: TBatch;
+  authorize?: TIdentity extends AppSyncIdentity
+    ? (identity: AppSyncIdentity) => identity is TIdentity
+    : (identity: AnyIdentity) => TIdentity;
   resolve: TBatch extends true
-    ? BatchResolveHandler<TSource, TArgs, TResult>
-    : ResolveHandler<TSource, TArgs, TResult>;
+    ? BatchResolveHandler<TTypeName, TFieldName, TSource, TArgs, TResult, TIdentity>
+    : ResolveHandler<TTypeName, TFieldName, TSource, TArgs, TResult, NoInfer<TIdentity>>;
 }
 
 /**
@@ -97,26 +120,39 @@ export interface ResolverParams<
 export function createResolver<
   TTypeName extends DefinitionTypename = DefinitionTypename,
   TFieldName extends ObjectFieldName<TTypeName> = ObjectFieldName<TTypeName>,
-  TBatch extends boolean | undefined = undefined,
   TSource extends FieldSource<TTypeName, TFieldName> = FieldSource<TTypeName, TFieldName>,
   TArgs extends FieldArgs<TTypeName, TFieldName> = FieldArgs<TTypeName, TFieldName>,
   TResult extends FieldResult<TTypeName, TFieldName> = FieldResult<TTypeName, TFieldName>,
+  TIdentity extends AnyIdentity = AnyIdentity,
+  TBatch extends boolean | undefined = undefined,
 >(
-  params: ResolverParams<TTypeName, TFieldName, TBatch, TSource, TArgs, TResult>
-): Resolver<TTypeName, TFieldName, TBatch, TSource, TArgs, TResult> {
-  const handler = middy<ResolverEvent<TSource, TArgs, TBatch>, TResult, Error, Context>(
+  params: ResolverParams<TTypeName, TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>
+): Resolver<TTypeName, TFieldName, TSource, TArgs, TResult, TIdentity, TBatch> {
+  const handler = middy<
+    ResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity, TBatch>,
+    TResult,
+    Error,
+    Context
+  >(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     params.resolve as any
   );
 
   // TODO: Implement authorization middleware based on `params.authorize`
 
-  const resolver: Resolver<TTypeName, TFieldName, TBatch, TSource, TArgs, TResult> = {
+  const resolver: Resolver<TTypeName, TFieldName, TSource, TArgs, TResult, TIdentity, TBatch> = {
     typeName: params.typeName,
     fieldName: params.fieldName,
     handler,
     batch: params.batch,
-    use(middleware: MiddlewareObj<ResolverEvent<TSource, TArgs, TBatch>, TResult, Error, Context>) {
+    use(
+      middleware: MiddlewareObj<
+        ResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity, TBatch>,
+        TResult,
+        Error,
+        Context
+      >
+    ) {
       handler.use(middleware);
       return resolver;
     },
@@ -127,14 +163,18 @@ export function createResolver<
 
 export function createQueryResolver<
   TFieldName extends ObjectFieldName<"Query"> = ObjectFieldName<"Query">,
-  TBatch extends boolean | undefined = undefined,
   TSource extends FieldSource<"Query", TFieldName> = FieldSource<"Query", TFieldName>,
   TArgs extends FieldArgs<"Query", TFieldName> = FieldArgs<"Query", TFieldName>,
   TResult extends FieldResult<"Query", TFieldName> = FieldResult<"Query", TFieldName>,
+  TIdentity extends AnyIdentity = AppSyncIdentity,
+  TBatch extends boolean | undefined = undefined,
 >(
-  params: Omit<ResolverParams<"Query", TFieldName, TBatch, TSource, TArgs, TResult>, "typeName">
-): Resolver<"Query", TFieldName, TBatch, TSource, TArgs, TResult> {
-  return createResolver<"Query", TFieldName, TBatch, TSource, TArgs, TResult>({
+  params: Omit<
+    ResolverParams<"Query", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>,
+    "typeName"
+  >
+): Resolver<"Query", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch> {
+  return createResolver<"Query", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>({
     ...params,
     typeName: "Query",
   });
@@ -142,14 +182,18 @@ export function createQueryResolver<
 
 export function createMutationResolver<
   TFieldName extends ObjectFieldName<"Mutation"> = ObjectFieldName<"Mutation">,
-  TBatch extends boolean | undefined = undefined,
   TSource extends FieldSource<"Mutation", TFieldName> = FieldSource<"Mutation", TFieldName>,
   TArgs extends FieldArgs<"Mutation", TFieldName> = FieldArgs<"Mutation", TFieldName>,
   TResult extends FieldResult<"Mutation", TFieldName> = FieldResult<"Mutation", TFieldName>,
+  TIdentity extends AnyIdentity = AppSyncIdentity,
+  TBatch extends boolean | undefined = undefined,
 >(
-  params: Omit<ResolverParams<"Mutation", TFieldName, TBatch, TSource, TArgs, TResult>, "typeName">
-): Resolver<"Mutation", TFieldName, TBatch, TSource, TArgs, TResult> {
-  return createResolver<"Mutation", TFieldName, TBatch, TSource, TArgs, TResult>({
+  params: Omit<
+    ResolverParams<"Mutation", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>,
+    "typeName"
+  >
+): Resolver<"Mutation", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch> {
+  return createResolver<"Mutation", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>({
     ...params,
     typeName: "Mutation",
   });
@@ -157,16 +201,17 @@ export function createMutationResolver<
 
 export function createSubscriptionResolver<
   TFieldName extends ObjectFieldName<"Subscription"> = ObjectFieldName<"Subscription">,
-  TBatch extends boolean | undefined = undefined,
   TSource extends FieldSource<"Subscription", TFieldName> = FieldSource<"Subscription", TFieldName>,
   TArgs extends FieldArgs<"Subscription", TFieldName> = FieldArgs<"Subscription", TFieldName>,
   TResult extends FieldResult<"Subscription", TFieldName> = FieldResult<"Subscription", TFieldName>,
+  TIdentity extends AnyIdentity = AppSyncIdentity,
+  TBatch extends boolean | undefined = undefined,
 >(
   params: Omit<
-    ResolverParams<"Subscription", TFieldName, TBatch, TSource, TArgs, TResult>,
+    ResolverParams<"Subscription", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>,
     "typeName"
   >
-): Resolver<"Subscription", TFieldName, TBatch, TSource, TArgs, TResult> {
+): Resolver<"Subscription", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch> {
   return createResolver({
     ...params,
     typeName: "Subscription",

@@ -47,7 +47,7 @@ export type FieldSource<
   T extends DefinitionTypename,
   F extends ObjectFieldName<T>,
 > = keyof SchemaDefinition extends never
-  ? unknown
+  ? Record<string, unknown> | null
   : T extends keyof SchemaDefinition
     ? keyof SchemaDefinition[T] extends infer Fn
       ? Fn extends F

@@ -1,60 +1,12 @@
-import type {
-  AppSyncIdentity,
-  AppSyncIdentityCognito,
-  AppSyncIdentityIAM,
-  AppSyncIdentityLambda,
-  AppSyncIdentityOIDC,
-} from "aws-lambda";
 import { MiddlewareObj } from "@middy/core";
-import { AnyAppSyncResolverLikeEvent, isValidResolverEvent } from "../utils/index.js";
-import { hasProperty, isDefined, isRecord, isString } from "../utils/typeGuards.js";
-
-export function isOIDCIdentity(identity: AppSyncIdentity): identity is AppSyncIdentityOIDC {
-  return (
-    isDefined(identity) &&
-    hasProperty(identity, "sub") &&
-    isString(identity.sub) &&
-    hasProperty(identity, "issuer") &&
-    isString(identity.issuer) &&
-    hasProperty(identity, "claims") &&
-    isRecord(identity.claims)
-  );
-}
-
-export function isCognitoIdentity(identity: AppSyncIdentity): identity is AppSyncIdentityCognito {
-  return (
-    isOIDCIdentity(identity) &&
-    hasProperty(identity, "username") &&
-    isString(identity.username) &&
-    hasProperty(identity, "groups") &&
-    hasProperty(identity, "sourceIp") &&
-    Array.isArray(identity.sourceIp) &&
-    identity.sourceIp.every(isString)
-  );
-}
-
-export function isIAMIdentity(identity: AppSyncIdentity): identity is AppSyncIdentityIAM {
-  return (
-    isDefined(identity) &&
-    hasProperty(identity, "accountId") &&
-    isString(identity.accountId) &&
-    hasProperty(identity, "cognitoIdentityPoolId") &&
-    isString(identity.cognitoIdentityPoolId) &&
-    hasProperty(identity, "sourceIp") &&
-    Array.isArray(identity.sourceIp) &&
-    identity.sourceIp.every(isString) &&
-    hasProperty(identity, "username") &&
-    isString(identity.username)
-  );
-}
-
-export function isLambdaIdentity(identity: AppSyncIdentity): identity is AppSyncIdentityLambda {
-  return (
-    isDefined(identity) &&
-    hasProperty(identity, "resolverContext") &&
-    isRecord(identity.resolverContext)
-  );
-}
+import {
+  AnyAppSyncResolverLikeEvent,
+  isCognito,
+  isIAM,
+  isLambda,
+  isOIDC,
+  isValidResolverEvent,
+} from "../utils/index.js";
 
 export function allowCognitoIdentity<
   TEvent extends AnyAppSyncResolverLikeEvent,
@@ -63,11 +15,11 @@ export function allowCognitoIdentity<
   return {
     before(request) {
       if (Array.isArray(request.event)) {
-        if (!request.event.every((e) => isValidResolverEvent(e) && isCognitoIdentity(e.identity))) {
+        if (!request.event.every((e) => isValidResolverEvent(e) && isCognito(e.identity))) {
           throw new Error("Unauthorized");
         }
       } else {
-        if (!isValidResolverEvent(request.event) || !isCognitoIdentity(request.event.identity)) {
+        if (!isValidResolverEvent(request.event) || !isCognito(request.event.identity)) {
           throw new Error("Unauthorized");
         }
       }
@@ -82,11 +34,11 @@ export function allowIAMIdentity<
   return {
     before(request) {
       if (Array.isArray(request.event)) {
-        if (!request.event.every((e) => isValidResolverEvent(e) && isIAMIdentity(e.identity))) {
+        if (!request.event.every((e) => isValidResolverEvent(e) && isIAM(e.identity))) {
           throw new Error("Unauthorized");
         }
       } else {
-        if (!isValidResolverEvent(request.event) || !isIAMIdentity(request.event.identity)) {
+        if (!isValidResolverEvent(request.event) || !isIAM(request.event.identity)) {
           throw new Error("Unauthorized");
         }
       }
@@ -101,11 +53,11 @@ export function allowLambdaIdentity<
   return {
     before(request) {
       if (Array.isArray(request.event)) {
-        if (!request.event.every((e) => isValidResolverEvent(e) && isLambdaIdentity(e.identity))) {
+        if (!request.event.every((e) => isValidResolverEvent(e) && isLambda(e.identity))) {
           throw new Error("Unauthorized");
         }
       } else {
-        if (!isValidResolverEvent(request.event) || !isLambdaIdentity(request.event.identity)) {
+        if (!isValidResolverEvent(request.event) || !isLambda(request.event.identity)) {
           throw new Error("Unauthorized");
         }
       }
@@ -120,11 +72,11 @@ export function allowOIDCIdentity<
   return {
     before(request) {
       if (Array.isArray(request.event)) {
-        if (!request.event.every((e) => isValidResolverEvent(e) && isOIDCIdentity(e.identity))) {
+        if (!request.event.every((e) => isValidResolverEvent(e) && isOIDC(e.identity))) {
           throw new Error("Unauthorized");
         }
       } else {
-        if (!isValidResolverEvent(request.event) || !isOIDCIdentity(request.event.identity)) {
+        if (!isValidResolverEvent(request.event) || !isOIDC(request.event.identity)) {
           throw new Error("Unauthorized");
         }
       }

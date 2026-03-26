@@ -1,10 +1,7 @@
 import { AppSyncResolverEvent } from "aws-lambda";
 import { hasProperty, isRecord, isString } from "./typeGuards.js";
-
-export type AnyAppSyncResolverEvent = AppSyncResolverEvent<unknown, unknown>;
-export type AnyAppSyncBatchResolverEvent = AnyAppSyncResolverEvent[];
-
-export type AnyAppSyncResolverLikeEvent = AnyAppSyncResolverEvent | AnyAppSyncBatchResolverEvent;
+import { AnyIdentity } from "./auth.js";
+import { DefinitionTypename, FieldArgs, FieldSource, ObjectFieldName } from "./definition.js";
 
 export const isValidResolverEvent = (
   event: unknown
@@ -29,3 +26,54 @@ export const isValidResolverEvent = (
     isRecord(event.stash)
   );
 };
+
+export type AnyAppSyncResolverEvent = AppSyncResolverEvent<unknown, unknown>;
+export type AnyAppSyncBatchResolverEvent = AnyAppSyncResolverEvent[];
+export type AnyAppSyncResolverInputEvent = AnyAppSyncResolverEvent | AnyAppSyncBatchResolverEvent;
+
+export type AnyAppSyncResolverLikeEvent = AnyAppSyncResolverInputEvent;
+
+export function normalizeEvent<
+  TTypeName extends string,
+  TFieldName extends string,
+  TSource extends Record<string, unknown> | null,
+  TArgs extends Record<string, unknown>,
+  TIdentity extends AnyIdentity,
+>(
+  event: AnyAppSyncResolverEvent
+): TypedAppSyncResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity> {
+  return {
+    ...event,
+    args: event.arguments,
+    identity: event.identity ?? null,
+  } as TypedAppSyncResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity>;
+}
+
+export interface TypedAppSyncResolverEvent<
+  TTypeName extends string,
+  TFieldName extends string,
+  TSource extends Record<string, unknown> | null,
+  TArgs extends Record<string, unknown>,
+  TIdentity extends AnyIdentity,
+> extends Omit<AppSyncResolverEvent<TArgs, TSource>, "identity"> {
+  args: TArgs;
+  identity: TIdentity;
+  info: {
+    parentTypeName: TTypeName;
+    fieldName: TFieldName;
+    selectionSetList: string[];
+    selectionSetGraphQL: string;
+    variables: Record<string, unknown>;
+  };
+}
+
+export type ResolverEvent<
+  TTypeName extends DefinitionTypename,
+  TFieldName extends ObjectFieldName<TTypeName>,
+  TSource extends FieldSource<TTypeName, TFieldName>,
+  TArgs extends FieldArgs<TTypeName, TFieldName>,
+  TIdentity extends AnyIdentity,
+  TBatch extends boolean | undefined = undefined,
+> = TBatch extends true
+  ? TypedAppSyncResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity>[]
+  : TypedAppSyncResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity>;

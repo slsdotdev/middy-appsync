@@ -11,6 +11,5 @@ export {
   type ResolveHandler,
   type ResolverParams,
   type BatchResolveHandler,
-  type ResolverEvent,
 } from "./createResolver.js";
 export { defineResolvers } from "./defineResolvers.js";
