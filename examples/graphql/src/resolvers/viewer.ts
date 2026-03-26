@@ -28,7 +28,7 @@ const viewer = createQueryResolver({
 
 const createUser = createMutationResolver({
   fieldName: "createUser",
-  resolve: ({ arguments: { input } }) => {
+  resolve: ({ args: { input } }) => {
     return {
       id: input.id,
       name: input.name,

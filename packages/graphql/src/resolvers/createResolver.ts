@@ -10,6 +10,7 @@ import {
 } from "../utils/definition.js";
 import { ResolverEvent, TypedAppSyncResolverEvent } from "../utils/event.js";
 import { AnyIdentity } from "../utils/auth.js";
+import { withAuthorizer } from "../middleware/authorization.js";
 
 export type ResolveHandler<
   TTypeName extends DefinitionTypename,
@@ -138,7 +139,10 @@ export function createResolver<
     params.resolve as any
   );
 
-  // TODO: Implement authorization middleware based on `params.authorize`
+  if (params.authorize) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handler.use(withAuthorizer(params.authorize as any));
+  }
 
   const resolver: Resolver<TTypeName, TFieldName, TSource, TArgs, TResult, TIdentity, TBatch> = {
     typeName: params.typeName,
