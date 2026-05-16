@@ -57,11 +57,11 @@
   },
   "peerDependencies": {
     "@middy-appsync/graphql": "^0.1.1",
-    "aws-cdk-lib": "^2.254",
-    "constructs": "^10.6",
     "esbuild": "^0.28"
   },
   "devDependencies": {
-    "@aws-appsync/utils": "^2.1.1"
+    "@aws-appsync/utils": "^2.1.1",
+    "aws-cdk-lib": "^2.253.1",
+    "constructs": "^10.6.0"
   }
 }
