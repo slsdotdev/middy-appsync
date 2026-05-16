@@ -28,8 +28,8 @@
     "codegen": "middy-appsync generate"
   },
   "dependencies": {
-    "@middy/core": "^7.2.1",
-    "@middy-appsync/graphql": "*"
+    "@middy-appsync/graphql": "^0.1.1",
+    "@middy/core": "^7.6.2"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.161"
