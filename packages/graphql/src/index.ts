@@ -21,6 +21,14 @@ export {
 } from "./resolvers/index.js";
 export { appSyncGraphQLRouter, type GraphQLRouterParams } from "./router/index.js";
 export {
+  GraphQLError,
+  Unauthorized,
+  isIAM,
+  isCognito,
+  isLambda,
+  isOIDC,
+  rule,
+  type ResolverResult,
   type Authorization,
   type Definition,
   type DefinitionObject,

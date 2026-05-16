@@ -31,22 +31,26 @@
     "publish": "changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.30.0",
+    "@aws-appsync/utils": "^2.1.1",
+    "@changesets/cli": "^2.31.0",
     "@eslint/js": "^10.0.1",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.8.0",
     "@vitest/coverage-v8": "^4.1.2",
-    "eslint": "^10.1.0",
+    "aws-cdk-lib": "^2.254.0",
+    "constructs": "^10.6.0",
+    "eslint": "^10.4.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-config-turbo": "^2.8.20",
-    "globals": "^17.4.0",
+    "eslint-config-turbo": "^2.9.14",
+    "globals": "^17.6.0",
     "husky": "^9.1.7",
-    "prettier": "^3.8.1",
-    "turbo": "^2.8.20",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.2",
+    "prettier": "^3.8.3",
+    "turbo": "^2.9.14",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.3",
     "vitest": "^4.1.0"
   },
   "workspaces": [
+    "examples/*",
     "packages/*"
   ]
 }

@@ -7,6 +7,7 @@ import {
   isValidResolverEvent,
   normalizeEvent,
 } from "../utils/event.js";
+import { formatResult } from "../utils/result.js";
 
 export interface GraphQLRouterParams {
   resolvers: AnyResolver[];
@@ -27,36 +28,47 @@ export function appSyncGraphQLRouter(params: GraphQLRouterParams): AppSyncGraphQ
   }
 
   return async function handler(event: AnyAppSyncResolverLikeEvent, context: Context) {
-    if (Array.isArray(event)) {
-      if (!event.length || event.some((e) => !isValidResolverEvent(e))) {
+    try {
+      if (Array.isArray(event)) {
+        if (!event.length || event.some((e) => !isValidResolverEvent(e))) {
+          throw new Error("Unknown resolver event format", {
+            cause: { package: "@middy-appsync/graphql", event },
+          });
+        }
+
+        const info = event[0].info;
+        const resolver = registry.get(info.parentTypeName, info.fieldName);
+
+        if (!resolver || !isBatchResolver(resolver)) {
+          return event.map((ev) => fallbackResolver(normalizeEvent(ev), context));
+        }
+
+        const results = await resolver.handler(event.map(normalizeEvent), context);
+
+        if (!Array.isArray(results)) {
+          return event.map((ev) => formatResult(results, null, ev.stash));
+        }
+
+        return results.map((result, i) => formatResult(result, null, event[i].stash));
+      }
+
+      if (!isValidResolverEvent(event)) {
         throw new Error("Unknown resolver event format", {
           cause: { package: "@middy-appsync/graphql", event },
         });
       }
 
-      const info = event[0].info;
+      const info = event.info;
       const resolver = registry.get(info.parentTypeName, info.fieldName);
 
-      if (!resolver || !isBatchResolver(resolver)) {
-        return event.map((ev) => fallbackResolver(normalizeEvent(ev), context));
+      if (!resolver || isBatchResolver(resolver)) {
+        return fallbackResolver(normalizeEvent(event), context);
       }
 
-      return resolver.handler(event.map(normalizeEvent), context);
+      const result = await resolver.handler(normalizeEvent(event), context);
+      return formatResult(result, null, event.stash);
+    } catch (error) {
+      return formatResult(null, error);
     }
-
-    if (!isValidResolverEvent(event)) {
-      throw new Error("Unknown resolver event format", {
-        cause: { package: "@middy-appsync/graphql", event },
-      });
-    }
-
-    const info = event.info;
-    const resolver = registry.get(info.parentTypeName, info.fieldName);
-
-    if (!resolver || isBatchResolver(resolver)) {
-      return fallbackResolver(normalizeEvent(event), context);
-    }
-
-    return resolver.handler(normalizeEvent(event), context);
   };
 }

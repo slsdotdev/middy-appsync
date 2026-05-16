@@ -1,7 +1,7 @@
 {
-  "name": "@middy-appsync/graphql",
+  "name": "@middy-appsync/constructs",
   "version": "0.1.1",
-  "description": "Lambda router and tools for AWS AppSync GraphQL using Middy middleware",
+  "description": "CDK constructs for middy-appsync",
   "sideEffects": false,
   "type": "module",
   "license": "MIT",
@@ -12,12 +12,12 @@
   "author": {
     "name": "sls.dev",
     "email": "dev@sls.dev",
-    "url": "https://wwww.sls.dev"
+    "url": "https://www.sls.dev"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/slsdotdev/middy-appsync.git",
-    "directory": "packages/graphql"
+    "directory": "packages/constructs"
   },
   "bugs": {
     "url": "https://github.com/slsdotdev/middy-appsync/issues"
@@ -26,7 +26,7 @@
     "Middy.js",
     "AppSync",
     "AWS",
-    "GraphQL",
+    "CDK",
     "TypeScript"
   ],
   "files": [
@@ -51,11 +51,17 @@
     "test": "vitest run",
     "lint": "eslint src --ext .ts"
   },
+  "dependencies": {
+    "comment-parser": "^1.4.6",
+    "tinyglobby": "^0.2.16"
+  },
   "peerDependencies": {
-    "@middy/core": ">=7"
+    "@middy-appsync/graphql": "^0.1.1",
+    "aws-cdk-lib": "^2.254",
+    "constructs": "^10.6",
+    "esbuild": "^0.28"
   },
   "devDependencies": {
-    "@middy/core": "^7.6.0",
-    "@types/aws-lambda": "^8.10.161"
+    "@aws-appsync/utils": "^2.1.1"
   }
 }

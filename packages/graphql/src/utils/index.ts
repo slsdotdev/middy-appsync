@@ -19,3 +19,5 @@ export {
   type AnyAppSyncResolverInputEvent,
   type TypedAppSyncResolverEvent,
 } from "./event.js";
+export { GraphQLError, Unauthorized } from "./errors.js";
+export { formatResult, type ResolverResult } from "./result.js";
