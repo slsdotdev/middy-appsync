@@ -47,7 +47,7 @@
     "turbo": "^2.9.14",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.3",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.6"
   },
   "workspaces": [
     "examples/*",
