@@ -21,7 +21,6 @@
   },
   "main": "src/index.ts",
   "scripts": {
-    "build": "tsc",
     "test": "vitest run",
     "lint": "eslint src --ext .ts",
     "dev": "vitest watch",
