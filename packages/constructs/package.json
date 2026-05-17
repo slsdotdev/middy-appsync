@@ -56,8 +56,8 @@
     "tinyglobby": "^0.2.16"
   },
   "peerDependencies": {
-    "@middy-appsync/graphql": "^0.1.2",
-    "esbuild": "^0.28"
+    "@middy-appsync/graphql": ">=0.1",
+    "esbuild": ">=0.27"
   },
   "devDependencies": {
     "@aws-appsync/utils": "^2.1.1",
