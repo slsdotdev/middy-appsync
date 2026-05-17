@@ -27,7 +27,7 @@
     "codegen": "middy-appsync generate"
   },
   "dependencies": {
-    "@middy-appsync/graphql": "^0.1.2",
+    "@middy-appsync/graphql": "^0.1.3",
     "@middy/core": "^7.6.2"
   },
   "devDependencies": {

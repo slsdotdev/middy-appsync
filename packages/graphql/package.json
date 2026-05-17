@@ -1,6 +1,6 @@
 {
   "name": "@middy-appsync/graphql",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Lambda router and tools for AWS AppSync GraphQL using Middy middleware",
   "sideEffects": false,
   "type": "module",
