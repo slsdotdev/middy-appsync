@@ -116,8 +116,8 @@ export class MiddyAppsyncGraphQLResolvers extends Construct {
 
     const [defaultInvokeSource, defaultBatchInvokeSource] = buildSources(
       [
-        path.join(__dirname, "templates", "invoke.ts"),
-        path.join(__dirname, "templates", "batch-invoke.ts"),
+        path.join(__dirname, "templates", "invoke.js"),
+        path.join(__dirname, "templates", "batch-invoke.js"),
       ],
       outDir
     );
