@@ -60,9 +60,6 @@ export const isValidResolverEvent = (
     isRecord(event.info) &&
     isString(event.info.parentTypeName) &&
     isString(event.info.fieldName) &&
-    isString(event.info.selectionSetGraphQL) &&
-    Array.isArray(event.info.selectionSetList) &&
-    event.info.selectionSetList.every(isString) &&
     isRecord(event.info.variables) &&
     isRecord(event.stash)
   );

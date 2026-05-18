@@ -6,6 +6,7 @@ export default defineConfig({
     environment: "node",
     globals: true,
     passWithNoTests: true,
+    exclude: ["e2e/**", "infra/**", "node_modules/**", "dist/**", "cdk.out/**"],
     coverage: {
       reportsDirectory: "../../coverage/packages/plugins",
     },

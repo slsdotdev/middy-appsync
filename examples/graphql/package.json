@@ -22,15 +22,26 @@
   "main": "src/index.ts",
   "scripts": {
     "test": "vitest run",
+    "test:e2e": "dotenvx run -- vitest run --config vitest.config.e2e.ts",
     "lint": "eslint src --ext .ts",
-    "dev": "vitest watch",
-    "codegen": "middy-appsync generate"
+    "cdk": "dotenvx run -- cdk",
+    "deploy": "dotenvx run -- cdk deploy --require-approval never",
+    "destroy": "dotenvx run -- cdk destroy --force"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1045.0",
+    "@aws-sdk/lib-dynamodb": "^3.1045.0",
     "@middy-appsync/graphql": "^0.1.4",
     "@middy/core": "^7.6.2"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.161"
+    "@dotenvx/dotenvx": "^1.65.0",
+    "@middy-appsync/constructs": "^0.1.3",
+    "@types/aws-lambda": "^8.10.161",
+    "aws-cdk": "^2.1121.0",
+    "aws-cdk-lib": "^2.253.1",
+    "constructs": "^10.6.0",
+    "esbuild": "^0.28.0",
+    "tsx": "^4.21.0"
   }
 }

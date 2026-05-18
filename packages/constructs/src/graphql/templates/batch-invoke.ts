@@ -5,7 +5,14 @@ export function request(ctx: Context): LambdaRequest {
   return {
     operation: "BatchInvoke",
     invocationType: "RequestResponse",
-    payload: ctx,
+    payload: {
+      ...ctx,
+      info: {
+        ...ctx.info,
+        selectionSetGraphQL: ctx.info.selectionSetGraphQL,
+        selectionSetList: [...ctx.info.selectionSetList],
+      },
+    } satisfies Context,
   };
 }
 
@@ -14,20 +21,15 @@ export function response(ctx: Context) {
     util.error(ctx.error.message, ctx.error.type);
   }
 
-  const result = ctx.result as ResolverResult[];
-  const responses: unknown[] = [];
+  const result = ctx.result as ResolverResult;
 
-  for (const res of result) {
-    if (res.error) {
-      util.appendError(res.error.message, res.error.type);
-    }
-
-    if (res.stash) {
-      Object.assign(ctx.stash, res.stash);
-    }
-
-    responses.push(res.data ?? null);
+  if (result.error) {
+    util.error(result.error.message, result.error.type);
   }
 
-  return responses;
+  if (result.stash) {
+    Object.assign(ctx.stash, result.stash);
+  }
+
+  return result.data ?? null;
 }

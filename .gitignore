@@ -142,4 +142,7 @@ vite.config.ts.timestamp-*
 .turbo
 
 # Codegen
-generated/
+generated
+
+#CDK 
+cdk.out

@@ -13,5 +13,15 @@
       "inputs": ["$TURBO_DEFAULT$"],
       "outputs": ["dist/**"]
     }
-  }
+  },
+  "globalPassThroughEnv": [
+    "GRAPHQL_URL",
+    "API_KEY",
+    "USERS_TABLE",
+    "POSTS_TABLE",
+    "AWS_REGION",
+    "SKIP_DEPLOY",
+    "CDK_DEFAULT_ACCOUNT",
+    "CDK_DEFAULT_REGION"
+  ]
 }

@@ -5,7 +5,14 @@ export function request(ctx: Context): LambdaRequest {
   return {
     operation: "Invoke",
     invocationType: "RequestResponse",
-    payload: ctx,
+    payload: {
+      ...ctx,
+      info: {
+        ...ctx.info,
+        selectionSetGraphQL: ctx.info.selectionSetGraphQL,
+        selectionSetList: [...ctx.info.selectionSetList],
+      },
+    } satisfies Context,
   };
 }
 

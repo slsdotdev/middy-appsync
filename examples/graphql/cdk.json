@@ -1,0 +1,12 @@
+{
+  "app": "npx tsx infra/bin/app.ts",
+  "outputsFile": "./cdk.out/outputs.json",
+  "watch": {
+    "include": ["infra/**", "src/**", "generated/**"],
+    "exclude": ["infra/cdk.out", "node_modules", "dist"]
+  },
+  "context": {
+    "@aws-cdk/aws-lambda:useCdkManagedLogGroup": true,
+    "@aws-cdk/core:newStyleStackSynthesis": true
+  }
+}

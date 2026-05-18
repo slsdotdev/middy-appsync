@@ -8,7 +8,7 @@
     "incremental": true,
     "isolatedModules": true,
     "composite": true,
-    "sourceMap": true
+    "sourceMap": true,
   },
   "include": [
     "src"
