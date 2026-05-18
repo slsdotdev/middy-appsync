@@ -15,17 +15,27 @@ export interface TypedAppSyncResolverEvent<
   TSource extends Record<string, unknown> | null,
   TArgs extends Record<string, unknown>,
   TIdentity extends Identity,
-> extends Omit<AppSyncResolverEvent<TArgs, TSource>, "identity"> {
+> extends Omit<AppSyncResolverEvent<TArgs, TSource>, "identity" | "info"> {
   args: TArgs;
   identity: TIdentity;
   info: {
     parentTypeName: TTypeName;
     fieldName: TFieldName;
-    selectionSetList: string[];
-    selectionSetGraphQL: string;
     variables: Record<string, unknown>;
+    selectionSetList: string[] | null;
+    selectionSetGraphQL: string | null;
   };
 }
+
+export type AnyResolverEvent = TypedAppSyncResolverEvent<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  any,
+  Record<string, unknown> | null,
+  Record<string, unknown>,
+  Identity
+>;
 
 export type ResolverEvent<
   TTypeName extends DefinitionTypename,
@@ -83,5 +93,12 @@ export function normalizeEvent<
     ...event,
     args: event.arguments,
     identity: event.identity ?? null,
+    info: {
+      parentTypeName: event.info.parentTypeName,
+      fieldName: event.info.fieldName,
+      variables: event.info.variables,
+      selectionSetList: event.info.selectionSetList ?? null,
+      selectionSetGraphQL: event.info.selectionSetGraphQL ?? null,
+    },
   } as TypedAppSyncResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity>;
 }

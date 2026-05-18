@@ -1,7 +1,7 @@
 import type { Context, Handler } from "aws-lambda";
 import { AnyResolver } from "../resolvers/index.js";
 import { createRouterRegistry } from "./registry.js";
-import { isBatchResolver } from "../resolvers/createResolver.js";
+import { isBatchResolver, ResolveHandler } from "../resolvers/createResolver.js";
 import {
   AnyAppSyncResolverLikeEvent,
   isValidResolverEvent,
@@ -11,7 +11,8 @@ import { formatResult } from "../utils/result.js";
 
 export interface GraphQLRouterParams {
   resolvers: AnyResolver[];
-  fallbackResolver?: Extract<AnyResolver, { batch?: false }>["handler"];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fallbackResolver?: ResolveHandler<any, any, any, any, any, any>;
 }
 
 export type AppSyncGraphQLResolverHandler = Handler<

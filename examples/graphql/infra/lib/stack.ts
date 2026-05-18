@@ -80,7 +80,7 @@ export class ExampleStack extends Stack {
         fieldLogLevel: FieldLogLevel.ALL,
         retention: RetentionDays.ONE_DAY,
       },
-      xrayEnabled: false,
+      xrayEnabled: true,
     });
 
     const lambdaDs = api.addLambdaDataSource("LambdaDs", handler);

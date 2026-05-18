@@ -1,0 +1,16 @@
+{
+  "name": "@middy-appsync/internal",
+  "version": "0.0.0",
+  "description": "Internal-only utils for @middy-appsync packages. Not published.",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src --ext .ts"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.161"
+  }
+}

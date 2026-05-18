@@ -1,5 +1,5 @@
 import { MiddlewareObj } from "@middy/core";
-import { AnyAppSyncResolverLikeEvent, isValidResolverEvent } from "../utils/index.js";
+import { AnyAppSyncResolverLikeEvent, isValidResolverEvent, Unauthorized } from "../utils/index.js";
 import { isCognito, isIAM, isLambda, isOIDC } from "../utils/auth.js";
 
 export function allowCognitoIdentity<
@@ -10,11 +10,11 @@ export function allowCognitoIdentity<
     before(request) {
       if (Array.isArray(request.event)) {
         if (!request.event.every((e) => isValidResolverEvent(e) && isCognito(e.identity))) {
-          throw new Error("Unauthorized");
+          throw new Unauthorized();
         }
       } else {
         if (!isValidResolverEvent(request.event) || !isCognito(request.event.identity)) {
-          throw new Error("Unauthorized");
+          throw new Unauthorized();
         }
       }
     },
@@ -29,11 +29,11 @@ export function allowIAMIdentity<
     before(request) {
       if (Array.isArray(request.event)) {
         if (!request.event.every((e) => isValidResolverEvent(e) && isIAM(e.identity))) {
-          throw new Error("Unauthorized");
+          throw new Unauthorized();
         }
       } else {
         if (!isValidResolverEvent(request.event) || !isIAM(request.event.identity)) {
-          throw new Error("Unauthorized");
+          throw new Unauthorized();
         }
       }
     },
@@ -48,11 +48,11 @@ export function allowLambdaIdentity<
     before(request) {
       if (Array.isArray(request.event)) {
         if (!request.event.every((e) => isValidResolverEvent(e) && isLambda(e.identity))) {
-          throw new Error("Unauthorized");
+          throw new Unauthorized();
         }
       } else {
         if (!isValidResolverEvent(request.event) || !isLambda(request.event.identity)) {
-          throw new Error("Unauthorized");
+          throw new Unauthorized();
         }
       }
     },
@@ -67,11 +67,11 @@ export function allowOIDCIdentity<
     before(request) {
       if (Array.isArray(request.event)) {
         if (!request.event.every((e) => isValidResolverEvent(e) && isOIDC(e.identity))) {
-          throw new Error("Unauthorized");
+          throw new Unauthorized();
         }
       } else {
         if (!isValidResolverEvent(request.event) || !isOIDC(request.event.identity)) {
-          throw new Error("Unauthorized");
+          throw new Unauthorized();
         }
       }
     },

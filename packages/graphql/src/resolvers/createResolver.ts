@@ -65,7 +65,7 @@ export interface Resolver<
 
 export type AnyResolver =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  | Resolver<any, any, any, any, any, any, undefined>
+  | Resolver<any, any, any, any, any, any, boolean | undefined>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | Resolver<any, any, any, any, any, any, true>;
 
@@ -121,7 +121,7 @@ export interface ResolverParams<
   //  * });
   //  * ```
   //  */
-  // authorize?: (identity: Identity) => TIdentity;
+  authorize?: (identity: Identity) => identity is TIdentity;
   /**
    * The resolver function that will be called when this resolver is invoked. If `batch` is `true`, this should be a batch resolver function that accepts an array of events and returns an array of results. Otherwise, it should be a regular resolver function that accepts a single event and returns a single result.
    * @param event The resolver event containing arguments, identity, source, etc.
