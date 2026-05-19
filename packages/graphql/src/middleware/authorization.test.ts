@@ -13,7 +13,9 @@ import {
   allowIAMIdentity,
   allowLambdaIdentity,
   allowOIDCIdentity,
+  withAuthorization,
 } from "./authorization.js";
+import { isCognito } from "../utils/auth.js";
 import { describe, expect, it } from "vitest";
 
 const makeRequest = <T>(event: T): Request<T, unknown, Error> =>
@@ -129,5 +131,66 @@ describe("allowOIDCIdentity (Cognito compatibility)", () => {
     await expect(
       runBefore(middleware, mockResolverEvent({ identity: cognitoIdentity }))
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("withAuthorization", () => {
+  it("passes through when the predicate returns true for a single event", async () => {
+    const middleware = withAuthorization(isCognito);
+    const event = mockResolverEvent({ identity: cognitoIdentity });
+
+    await expect(runBefore(middleware, event)).resolves.toBeUndefined();
+  });
+
+  it("throws Unauthorized when the predicate returns false for a single event", async () => {
+    const middleware = withAuthorization(isCognito);
+    const event = mockResolverEvent({ identity: iamIdentity });
+
+    await expect(runBefore(middleware, event)).rejects.toBeInstanceOf(Unauthorized);
+  });
+
+  it("passes through when the predicate returns true for every batch entry", async () => {
+    const middleware = withAuthorization(isCognito);
+    const events = mockBatchResolverEvent(3, { identity: cognitoIdentity });
+
+    await expect(runBefore(middleware, events)).resolves.toBeUndefined();
+  });
+
+  it("throws Unauthorized when any batch entry fails the predicate", async () => {
+    const middleware = withAuthorization(isCognito);
+    const events = [
+      mockResolverEvent({ identity: cognitoIdentity }),
+      mockResolverEvent({ identity: iamIdentity }),
+    ];
+
+    await expect(runBefore(middleware, events)).rejects.toBeInstanceOf(Unauthorized);
+  });
+
+  it("throws Unauthorized for a malformed event", async () => {
+    const middleware = withAuthorization(isCognito);
+
+    await expect(runBefore(middleware, { not: "an event" } as never)).rejects.toBeInstanceOf(
+      Unauthorized
+    );
+  });
+
+  it("supports custom predicates", async () => {
+    const isAlice = (identity: unknown): identity is { username: "alice" } =>
+      typeof identity === "object" &&
+      identity !== null &&
+      "username" in identity &&
+      (identity as { username: unknown }).username === "alice";
+
+    const middleware = withAuthorization(isAlice as never);
+
+    await expect(
+      runBefore(middleware, mockResolverEvent({ identity: cognitoIdentity }))
+    ).resolves.toBeUndefined();
+    await expect(
+      runBefore(
+        middleware,
+        mockResolverEvent({ identity: { ...cognitoIdentity, username: "bob" } })
+      )
+    ).rejects.toBeInstanceOf(Unauthorized);
   });
 });

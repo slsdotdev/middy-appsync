@@ -7,29 +7,21 @@ import { AnyResolver } from "./createResolver.js";
  *
  * @example
  * ```ts
- * import { defineResolvers, createQueryResolver } from "@middy-appsync/graphql";
+ * import { defineResolvers, mutation, object, query } from "@middy-appsync/graphql";
  *
- * const getUser = createQueryResolver({
- *   fieldName: "getUser",
- *   resolve: () => {
- *     return {
- *       id: "123",
- *       name: "John Doe",
- *     };
- *   },
+ * const userQueries = query({
+ *   getUser: () => ({ id: "123", name: "John Doe" }),
  * });
  *
- * const createUser = createMutationResolver({
- *   fieldName: "createUser",
- *   resolve: ({ args: { input } }) => {
- *     return {
- *       id: input.id,
- *       name: input.name,
- *     };
- *   },
+ * const userMutations = mutation({
+ *   createUser: ({ args: { input } }) => ({ id: input.id, name: input.name }),
  * });
  *
- * export default defineResolvers(getUser, createUser);
+ * const userFields = object("User", {
+ *   displayName: ({ source }) => source.name.toUpperCase(),
+ * });
+ *
+ * export default defineResolvers(userQueries, userMutations, userFields);
  * ```
  */
 

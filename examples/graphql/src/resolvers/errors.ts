@@ -1,4 +1,4 @@
-import { GraphQLError, createQueryResolver } from "@middy-appsync/graphql";
+import { GraphQLError, query } from "@middy-appsync/graphql";
 
 class IntentionalError extends GraphQLError {
   constructor(message: string) {
@@ -7,9 +7,8 @@ class IntentionalError extends GraphQLError {
   }
 }
 
-export const failingQuery = createQueryResolver({
-  fieldName: "failingQuery",
-  resolve: (): string | null => {
+export const errorQueries = query({
+  failingQuery: (): string | null => {
     throw new IntentionalError("BOOM");
   },
 });

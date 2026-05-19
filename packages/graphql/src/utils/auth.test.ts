@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
+import type { AppSyncIdentity } from "aws-lambda";
 import {
   cognitoIdentity,
   iamIdentity,
   lambdaIdentity,
   oidcIdentity,
 } from "@middy-appsync/internal/mocks";
-import { isCognito, isIAM, isLambda, isOIDC, rule } from "./auth.js";
+import { and, isCognito, isIAM, isLambda, isOIDC, or, rule } from "./auth.js";
 
 describe("isOIDC", () => {
   it("accepts OIDC identities (and Cognito which extends OIDC)", () => {
@@ -67,5 +68,78 @@ describe("rule", () => {
   it("returns the predicate unchanged (pass-through helper)", () => {
     const predicate = isCognito;
     expect(rule(predicate)).toBe(predicate);
+  });
+});
+
+describe("and", () => {
+  it("returns true only when every rule passes", () => {
+    const isAdmin = rule(
+      (identity: AppSyncIdentity): identity is AppSyncIdentity =>
+        isCognito(identity) && (identity.groups?.includes("admin") ?? false)
+    );
+
+    const isCognitoAdmin = and(isCognito, isAdmin);
+
+    expect(isCognitoAdmin(cognitoIdentity)).toBe(true);
+    expect(isCognitoAdmin({ ...cognitoIdentity, groups: ["viewer"] })).toBe(false);
+    expect(isCognitoAdmin(iamIdentity)).toBe(false);
+  });
+
+  it("short-circuits on the first failing rule", () => {
+    let secondCalled = false;
+    const failFast = (() => false) as never;
+    const trackingRule = (() => {
+      secondCalled = true;
+      return true;
+    }) as never;
+
+    const combined = and(failFast, trackingRule);
+    combined(cognitoIdentity);
+
+    expect(secondCalled).toBe(false);
+  });
+
+  it("returns true for the empty composition (vacuous truth)", () => {
+    expect(and()(cognitoIdentity)).toBe(true);
+    expect(and()(null)).toBe(true);
+  });
+
+  it("nests with or", () => {
+    const isCognitoOrIAM = or(isCognito, isIAM);
+    const isLoggedInAndAuthorized = and(isCognitoOrIAM, isCognitoOrIAM);
+
+    expect(isLoggedInAndAuthorized(cognitoIdentity)).toBe(true);
+    expect(isLoggedInAndAuthorized(iamIdentity)).toBe(true);
+    expect(isLoggedInAndAuthorized(lambdaIdentity)).toBe(false);
+  });
+});
+
+describe("or", () => {
+  it("returns true when any rule passes", () => {
+    const isCognitoOrIAM = or(isCognito, isIAM);
+
+    expect(isCognitoOrIAM(cognitoIdentity)).toBe(true);
+    expect(isCognitoOrIAM(iamIdentity)).toBe(true);
+    expect(isCognitoOrIAM(lambdaIdentity)).toBe(false);
+    expect(isCognitoOrIAM(oidcIdentity)).toBe(false);
+  });
+
+  it("short-circuits on the first passing rule", () => {
+    let secondCalled = false;
+    const passFast = (() => true) as never;
+    const trackingRule = (() => {
+      secondCalled = true;
+      return false;
+    }) as never;
+
+    const combined = or(passFast, trackingRule);
+    combined(cognitoIdentity);
+
+    expect(secondCalled).toBe(false);
+  });
+
+  it("returns false for the empty composition", () => {
+    expect(or()(cognitoIdentity)).toBe(false);
+    expect(or()(null)).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 import type { Context } from "aws-lambda";
 import middy, { MiddlewareObj, MiddyfiedHandler } from "@middy/core";
+import { withAuthorization } from "../middleware/authorization.js";
 import type { Identity } from "../utils/auth.js";
 import type {
   DefinitionTypename,
@@ -42,7 +43,7 @@ export interface Resolver<
   TArgs extends FieldArgs<TTypeName, TFieldName>,
   TResult extends FieldResult<TTypeName, TFieldName>,
   TIdentity extends Identity,
-  TBatch extends boolean | undefined,
+  TBatch extends true | undefined,
 > {
   typeName: TTypeName;
   fieldName: TFieldName;
@@ -63,11 +64,8 @@ export interface Resolver<
   ): Resolver<TTypeName, TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>;
 }
 
-export type AnyResolver =
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  | Resolver<any, any, any, any, any, any, boolean | undefined>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  | Resolver<any, any, any, any, any, any, true>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyResolver = Resolver<any, any, any, any, any, any, true | undefined>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyBatchResolver = Resolver<any, any, any, any, any, any, true>;
@@ -83,7 +81,7 @@ export interface ResolverParams<
   TArgs extends FieldArgs<TTypeName, TFieldName>,
   TResult extends FieldResult<TTypeName, TFieldName>,
   TIdentity extends Identity,
-  TBatch extends boolean | undefined,
+  TBatch extends true | undefined,
 > {
   /**
    * The name of the GraphQL type this resolver is for (e.g. "Query", "Mutation", "User", etc.)
@@ -101,27 +99,29 @@ export interface ResolverParams<
    */
   batch?: TBatch;
 
-  // /**
-  //  * Identity authorizer function that checks if the incoming request is authorized to access this resolver.
-  //  * @param identity
-  //  * @returns Predicates that narrow the type of `identity` to a specific identity type (e.g. Cognito, OIDC, IAM, Lambda, etc.) if the check passes. If the check fails, the resolver will return an unauthorized error.
-  //  * @example
-  //  * ```ts
-  //  * import { isCognito } from "@middy-appsync/graphql";
-  //  *
-  //  * const resolver = createResolver({
-  //  *   typeName: "Query",
-  //  *   fieldName: "getUser",
-  //  *   authorize: isCognito,
-  //  *   resolve: (event) => {
-  //  *     // At this point, TypeScript knows that event.identity is of type IdentityCognito
-  //  *     const username = event.identity.username;
-  //  *     // Fetch user by username and return
-  //  *   },
-  //  * });
-  //  * ```
-  //  */
+  /**
+   * Identity authorizer predicate that checks whether the incoming request is authorized to access this resolver. When provided, the resolver attaches a {@link withAuthorization} middleware that runs before any user-added `.use(...)` middleware. If the predicate returns `false` (for a single event or any entry of a batch event) the resolver throws an `Unauthorized` error.
+   *
+   * The predicate also narrows `event.identity` to `TIdentity` inside `resolve`.
+   *
+   * @example
+   * ```ts
+   * import { createResolver, isCognito } from "@middy-appsync/graphql";
+   *
+   * const resolver = createResolver({
+   *   typeName: "Query",
+   *   fieldName: "getUser",
+   *   authorize: isCognito,
+   *   resolve: (event) => {
+   *     // event.identity is typed as AppSyncIdentityCognito here
+   *     const username = event.identity.username;
+   *     // ...
+   *   },
+   * });
+   * ```
+   */
   authorize?: (identity: Identity) => identity is TIdentity;
+
   /**
    * The resolver function that will be called when this resolver is invoked. If `batch` is `true`, this should be a batch resolver function that accepts an array of events and returns an array of results. Otherwise, it should be a regular resolver function that accepts a single event and returns a single result.
    * @param event The resolver event containing arguments, identity, source, etc.
@@ -136,6 +136,12 @@ export interface ResolverParams<
 /**
  * Creates a GraphQL resolver for AWS AppSync.
  *
+ * `createResolver` is the low-level factory — it accepts the polymorphic
+ * `resolve` shape gated by the `batch` flag. For ergonomic call sites prefer
+ * {@link field} / {@link object} / {@link query} / {@link mutation} /
+ * {@link subscription}, which split into `resolve` vs `batchResolve` for
+ * cleaner inference.
+ *
  * @example
  * ```ts
  * import { createResolver } from "@middy-appsync/graphql";
@@ -144,16 +150,12 @@ export interface ResolverParams<
  *   typeName: "Query",
  *   fieldName: "getUser",
  *   resolve: async (event) => {
- *     const { id } = event.arguments;
+ *     const { id } = event.args;
  *     // Fetch user by id and return
  *   },
  * });
  * ```
- *
- * @param params - Reolver params
- * @returns
  */
-
 export function createResolver<
   TTypeName extends DefinitionTypename = DefinitionTypename,
   TFieldName extends ObjectFieldName<TTypeName> = ObjectFieldName<TTypeName>,
@@ -161,94 +163,38 @@ export function createResolver<
   TArgs extends FieldArgs<TTypeName, TFieldName> = FieldArgs<TTypeName, TFieldName>,
   TResult extends FieldResult<TTypeName, TFieldName> = FieldResult<TTypeName, TFieldName>,
   TIdentity extends Identity = Identity,
-  TBatch extends boolean | undefined = undefined,
+  TBatch extends true | undefined = undefined,
 >(
   params: ResolverParams<TTypeName, TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>
 ): Resolver<TTypeName, TFieldName, TSource, TArgs, TResult, TIdentity, TBatch> {
-  const handler = middy<
-    ResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity, TBatch>,
-    TResult,
-    Error,
-    Context
-  >(
+  type Event = ResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity, TBatch>;
+
+  const handler = middy<Event, TResult, Error, Context>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     params.resolve as any
   );
+
+  if (params.authorize) {
+    handler.use(
+      withAuthorization(params.authorize) as unknown as MiddlewareObj<
+        Event,
+        TResult,
+        Error,
+        Context
+      >
+    );
+  }
 
   const resolver: Resolver<TTypeName, TFieldName, TSource, TArgs, TResult, TIdentity, TBatch> = {
     typeName: params.typeName,
     fieldName: params.fieldName,
     handler,
     batch: params.batch,
-    use(
-      middleware: MiddlewareObj<
-        ResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity, TBatch>,
-        TResult,
-        Error,
-        Context
-      >
-    ) {
+    use(middleware: MiddlewareObj<Event, TResult, Error, Context>) {
       handler.use(middleware);
       return resolver;
     },
   };
 
   return resolver;
-}
-
-export function createQueryResolver<
-  TFieldName extends ObjectFieldName<"Query"> = ObjectFieldName<"Query">,
-  TSource extends FieldSource<"Query", TFieldName> = FieldSource<"Query", TFieldName>,
-  TArgs extends FieldArgs<"Query", TFieldName> = FieldArgs<"Query", TFieldName>,
-  TResult extends FieldResult<"Query", TFieldName> = FieldResult<"Query", TFieldName>,
-  TIdentity extends Identity = Identity,
-  TBatch extends boolean | undefined = undefined,
->(
-  params: Omit<
-    ResolverParams<"Query", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>,
-    "typeName"
-  >
-): Resolver<"Query", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch> {
-  return createResolver<"Query", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>({
-    ...params,
-    typeName: "Query",
-  });
-}
-
-export function createMutationResolver<
-  TFieldName extends ObjectFieldName<"Mutation"> = ObjectFieldName<"Mutation">,
-  TSource extends FieldSource<"Mutation", TFieldName> = FieldSource<"Mutation", TFieldName>,
-  TArgs extends FieldArgs<"Mutation", TFieldName> = FieldArgs<"Mutation", TFieldName>,
-  TResult extends FieldResult<"Mutation", TFieldName> = FieldResult<"Mutation", TFieldName>,
-  TIdentity extends Identity = Identity,
-  TBatch extends boolean | undefined = undefined,
->(
-  params: Omit<
-    ResolverParams<"Mutation", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>,
-    "typeName"
-  >
-): Resolver<"Mutation", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch> {
-  return createResolver<"Mutation", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>({
-    ...params,
-    typeName: "Mutation",
-  });
-}
-
-export function createSubscriptionResolver<
-  TFieldName extends ObjectFieldName<"Subscription"> = ObjectFieldName<"Subscription">,
-  TSource extends FieldSource<"Subscription", TFieldName> = FieldSource<"Subscription", TFieldName>,
-  TArgs extends FieldArgs<"Subscription", TFieldName> = FieldArgs<"Subscription", TFieldName>,
-  TResult extends FieldResult<"Subscription", TFieldName> = FieldResult<"Subscription", TFieldName>,
-  TIdentity extends Identity = Identity,
-  TBatch extends boolean | undefined = undefined,
->(
-  params: Omit<
-    ResolverParams<"Subscription", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch>,
-    "typeName"
-  >
-): Resolver<"Subscription", TFieldName, TSource, TArgs, TResult, TIdentity, TBatch> {
-  return createResolver({
-    ...params,
-    typeName: "Subscription",
-  });
 }

@@ -43,7 +43,7 @@ export type ResolverEvent<
   TSource extends FieldSource<TTypeName, TFieldName>,
   TArgs extends FieldArgs<TTypeName, TFieldName>,
   TIdentity extends Identity,
-  TBatch extends boolean | undefined = undefined,
+  TBatch extends true | undefined = undefined,
 > = TBatch extends true
   ? TypedAppSyncResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity>[]
   : TypedAppSyncResolverEvent<TTypeName, TFieldName, TSource, TArgs, TIdentity>;

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { Context } from "aws-lambda";
-import { mockBatchResolverEvent, mockResolverEvent } from "@middy-appsync/internal/mocks";
+import {
+  cognitoIdentity,
+  iamIdentity,
+  mockBatchResolverEvent,
+  mockResolverEvent,
+} from "@middy-appsync/internal/mocks";
+import { isCognito } from "../utils/auth.js";
+import { Unauthorized } from "../utils/errors.js";
 import { AnyResolverEvent, normalizeEvent } from "../utils/event.js";
 import { createResolver, isBatchResolver } from "./createResolver.js";
 
@@ -54,18 +61,6 @@ describe("createResolver", () => {
     });
 
     expect(resolver.batch).toBeUndefined();
-    expect(isBatchResolver(resolver)).toBe(false);
-  });
-
-  it("preserves batch: false as non-batch", () => {
-    const resolver = createResolver({
-      typeName: "Query",
-      fieldName: "getUser",
-      batch: false,
-      resolve: () => null,
-    });
-
-    expect(resolver.batch).toBe(false);
     expect(isBatchResolver(resolver)).toBe(false);
   });
 
@@ -145,6 +140,114 @@ describe("createResolver().use", () => {
     const result = await resolver.handler(event as AnyResolverEvent, context);
 
     expect(result).toEqual({ id: "from-middleware" });
+  });
+});
+
+describe("createResolver().authorize", () => {
+  it("does not attach authorization middleware when authorize is omitted", async () => {
+    const resolver = createResolver({
+      typeName: "Query",
+      fieldName: "getUser",
+      resolve: () => ({ ok: true }),
+    });
+
+    const event = normalizeEvent(mockResolverEvent({ identity: iamIdentity }));
+    await expect(resolver.handler(event as AnyResolverEvent, context)).resolves.toEqual({
+      ok: true,
+    });
+  });
+
+  it("invokes resolve when the predicate passes (single event)", async () => {
+    const resolver = createResolver({
+      typeName: "Query",
+      fieldName: "getUser",
+      authorize: isCognito,
+      resolve: ({ identity }) => ({ user: identity.username }),
+    });
+
+    const event = normalizeEvent(mockResolverEvent({ identity: cognitoIdentity }));
+    await expect(resolver.handler(event as never, context)).resolves.toEqual({
+      user: "alice",
+    });
+  });
+
+  it("throws Unauthorized when the predicate fails (single event)", async () => {
+    const resolver = createResolver({
+      typeName: "Query",
+      fieldName: "getUser",
+      authorize: isCognito,
+      resolve: () => ({ shouldNot: "run" }),
+    });
+
+    const event = normalizeEvent(mockResolverEvent({ identity: iamIdentity }));
+    await expect(resolver.handler(event as never, context)).rejects.toBeInstanceOf(Unauthorized);
+  });
+
+  it("throws Unauthorized when any batch entry fails the predicate", async () => {
+    const resolver = createResolver({
+      typeName: "User",
+      fieldName: "posts",
+      batch: true,
+      authorize: isCognito,
+      resolve: (events) => events.map(() => null),
+    });
+
+    const events = [
+      mockResolverEvent({ identity: cognitoIdentity }),
+      mockResolverEvent({ identity: iamIdentity }),
+    ].map(normalizeEvent);
+
+    await expect(resolver.handler(events as never, context)).rejects.toBeInstanceOf(Unauthorized);
+  });
+
+  it("runs authorize before user-added middleware", async () => {
+    const order: string[] = [];
+
+    const resolver = createResolver({
+      typeName: "Query",
+      fieldName: "getUser",
+      authorize: (identity) => {
+        order.push("authorize");
+        return isCognito(identity);
+      },
+      resolve: () => {
+        order.push("resolve");
+        return null;
+      },
+    });
+
+    resolver.use({
+      before: () => {
+        order.push("user-before");
+      },
+    });
+
+    const event = normalizeEvent(mockResolverEvent({ identity: cognitoIdentity }));
+    await resolver.handler(event as never, context);
+
+    expect(order).toEqual(["authorize", "user-before", "resolve"]);
+  });
+
+  it("skips user-added middleware when authorize rejects", async () => {
+    const order: string[] = [];
+
+    const resolver = createResolver({
+      typeName: "Query",
+      fieldName: "getUser",
+      authorize: isCognito,
+      resolve: () => null,
+    });
+
+    resolver.use({
+      before: () => {
+        order.push("user-before");
+      },
+    });
+
+    const event = normalizeEvent(mockResolverEvent({ identity: iamIdentity }));
+
+    await expect(resolver.handler(event as never, context)).rejects.toBeInstanceOf(Unauthorized);
+    expect(order).toEqual([]);
   });
 });
 

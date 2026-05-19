@@ -1,4 +1,4 @@
-export { type Identity, isCognito, isIAM, isLambda, isOIDC, rule } from "./auth.js";
+export { type Identity, and, isCognito, isIAM, isLambda, isOIDC, or, rule } from "./auth.js";
 export type { Definition, Authorization } from "./config.js";
 export type {
   DefinitionObject,
