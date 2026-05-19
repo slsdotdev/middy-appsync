@@ -1,5 +1,11 @@
 # @middy-appsync/graphql
 
+## 0.1.5
+
+### Patch Changes
+
+- d4c60ce: resolvers and auth updates
+
 ## 0.1.4
 
 ## 0.1.3
