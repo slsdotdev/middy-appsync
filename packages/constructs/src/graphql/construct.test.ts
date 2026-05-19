@@ -6,7 +6,7 @@ import { Template, Match } from "aws-cdk-lib/assertions";
 import { Definition, GraphqlApi } from "aws-cdk-lib/aws-appsync";
 import { Code as LambdaCode, Function as LambdaFunction, Runtime } from "aws-cdk-lib/aws-lambda";
 import { MiddyAppsyncGraphQLResolvers } from "./construct.js";
-import { AnyResolver, createResolver } from "@middy-appsync/graphql";
+import { AnyResolver, createResolver } from "@middy-appsync/graphql/resolvers";
 import { mockTemplateSource } from "../utils/test-utils.js";
 
 const SCHEMA = /* GraphQL */ `

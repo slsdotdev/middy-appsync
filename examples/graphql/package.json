@@ -21,7 +21,6 @@
   },
   "main": "src/index.ts",
   "scripts": {
-    "test": "vitest run",
     "test:e2e": "dotenvx run -- vitest run --config vitest.config.e2e.ts",
     "lint": "eslint src --ext .ts",
     "cdk": "dotenvx run -- cdk",
