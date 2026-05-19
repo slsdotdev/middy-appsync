@@ -1,6 +1,6 @@
 {
   "name": "@middy-appsync/constructs",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "CDK constructs for middy-appsync",
   "sideEffects": false,
   "type": "module",
@@ -56,7 +56,7 @@
     "tinyglobby": "^0.2.16"
   },
   "peerDependencies": {
-    "@middy-appsync/graphql": ">=0.1.4",
+    "@middy-appsync/graphql": ">=0.1.5",
     "esbuild": ">=0.27"
   },
   "devDependencies": {

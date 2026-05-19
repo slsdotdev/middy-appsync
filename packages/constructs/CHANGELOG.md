@@ -1,5 +1,12 @@
 # @middy-appsync/constructs
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [d4c60ce]
+  - @middy-appsync/graphql@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes
