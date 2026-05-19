@@ -1,5 +1,5 @@
 ---
-"@middy-appsync/graphql": minor
+"@middy-appsync/graphql": patch
 ---
 
 resolvers and auth updates
